@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+use markdi\config;
+
+if (isset($GLOBALS['_composer_autoload_path'])) {
+    define('PHPUNIT_COMPOSER_INSTALL', $GLOBALS['_composer_autoload_path']);
+
+    unset($GLOBALS['_composer_autoload_path']);
+} else {
+    foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php') as $file) {
+        if (file_exists($file)) {
+            define('PHPUNIT_COMPOSER_INSTALL', $file);
+            break;
+        }
+    }
+
+    unset($file);
+}
+
+if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
+    fwrite(
+        STDERR,
+        'Composer not found'
+    );
+
+    die(1);
+}
+
+$composer = require PHPUNIT_COMPOSER_INSTALL;
+markdi\io::run($composer);

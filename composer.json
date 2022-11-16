@@ -1,0 +1,23 @@
+{
+    "name": "markdi/markdi",
+    "description": "di plugin",
+    "type": "meta",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "markdi\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ilya Shveikin",
+            "email": "no_soap_0@mail.ru"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "bin": [
+        "bin/markdi"
+    ]
+}
