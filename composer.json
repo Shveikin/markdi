@@ -19,5 +19,9 @@
     },
     "bin": [
         "bin/markdi"
-    ]
+    ],
+    "markdi": "tests",
+    "require": {
+        "nikic/php-parser": "^4.15"
+    }
 }

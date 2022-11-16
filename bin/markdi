@@ -27,5 +27,5 @@ if (!defined('PHPUNIT_COMPOSER_INSTALL')) {
     die(1);
 }
 
-$composer = require PHPUNIT_COMPOSER_INSTALL;
-markdi\io::run($composer);
+require PHPUNIT_COMPOSER_INSTALL;
+markdi\io::run(dirname(__FILE__));
