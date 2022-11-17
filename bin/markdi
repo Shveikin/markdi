@@ -21,17 +21,18 @@ if (isset($GLOBALS['_composer_bin_dir'])){
     
         unset($file);
     }
+
+    if (defined('PHPUNIT_COMPOSER_INSTALL')) {
+        require PHPUNIT_COMPOSER_INSTALL;
+    } else {
+        fwrite(
+            STDERR,
+            'Composer not found'
+        );
+    
+        die(1);
+    }
 }
 
-if (defined('PHPUNIT_COMPOSER_INSTALL')) {
-    require PHPUNIT_COMPOSER_INSTALL;
-} else {
-    fwrite(
-        STDERR,
-        'Composer not found'
-    );
-
-    die(1);
-}
 
 markdi\io::run($__bin_path__);
