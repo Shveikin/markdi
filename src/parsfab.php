@@ -10,37 +10,26 @@ class parsfab {
     function parse($code){
         $this->code = $code;
         $tokens = \PhpToken::tokenize($this->code);
-        $findLux = ['T_OPEN_TAG', 'T_NAMESPACE'];
+        $findLux = ['T_OPEN_TAG', 'T_NAME_QUALIFIED'];
         $this->tokens = [];
-        $lastTag = false;
 
         foreach ($tokens as $token) {
             $tag = $token->getTokenName();
             
             if (in_array($tag, $findLux)){
-                if (!isset($thistokenstockens[$tag]))
-                    $this->tokens[$tag] = [];
-
-                $this->tokens[$tag]['from'] = $token->pos;
+                $this->tokens[$tag] = [
+                    'from' => $token->pos,
+                    'text' => $token->text,
+                ];
             }
-            if (in_array($lastTag, $findLux)){
-                $this->tokens[$lastTag]['to'] = $token->pos;
-                $this->tokens[$lastTag]['text'] = mb_substr(
-                    $this->code,
-                    $this->tokens[$lastTag]['from'], 
-                    $this->tokens[$lastTag]['from'] - $this->tokens[$lastTag]['to'], 
-                );
-            }
-
-            $lastTag = $tag;
         }
     }
 
     function namespace($namespace, $className){
-        if (isset($thistokenstockens['T_NAMESPACE'])){
-            $this->tockerReplace('T_NAMESPACE', "namespace $namespace");
+        if (isset($this->tokens['T_NAME_QUALIFIED'])){
+            $this->tockerReplace('T_NAME_QUALIFIED', $namespace);
         } else {
-            if (isset($thistokenstockens['T_OPEN_TAG'])){
+            if (isset($this->tokens['T_OPEN_TAG'])){
                 $this->tockerReplace('T_OPEN_TAG', "<?php\nnamespace $namespace;\n");
             } else {
                 $this->code .= <<<CODE
@@ -61,10 +50,13 @@ class parsfab {
     function tockerReplace(string $tocken, string $replace){
         $tag = $this->tokens[$tocken];
 
-        $code = 
-            mb_substr($this->code, 0, $tag['from']) . 
-            $replace .
-            mb_substr($this->code, $tag['from'] + $tag['to']);
+        $code = '';
+
+        if ($tag['from']!=0)
+            $code .= mb_substr($this->code, 0, $tag['from']);
+
+        $code .= $replace;
+        $code .= mb_substr($this->code, $tag['from'] + mb_strlen($tag['text']));
 
         $this->code = $code;
     }

@@ -2,6 +2,6 @@
 
 namespace tests\view;
 
-class MainView {
+class kde {
 
 }
