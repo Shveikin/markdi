@@ -7,7 +7,6 @@
         "psr-4": {
             "markdi\\": "src\/",
             "tests\\_markers\\": "tests\/_markers\/",
-            "tests\\View\\": "tests\/View\/",
             "tests\\fibers\\": "tests\/fibers\/",
             "tests\\models\\": "tests\/models\/",
             "tests\\viewz\\": "tests\/viewz\/"
@@ -25,8 +24,5 @@
     "bin": [
         "bin\/markdi"
     ],
-    "markdi": "tests",
-    "require": {
-        "nikic\/php-parser": "^4.15"
-    }
+    "markdi": "tests"
 }
