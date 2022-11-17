@@ -21,6 +21,7 @@ class io {
     private $composerJsonFile;
 
 
+
     protected function run($path){
         if ($composerRoot = $this->findComposerJson($path)){
             $this->composerJsonFile = "$composerRoot/composer.json";
@@ -74,6 +75,7 @@ class io {
     }
 
 
+
     function changeComposerJson(){
         if (!isset($this->composerJson['autoload']))
             $this->composerJson['autoload'] = [];
@@ -88,6 +90,7 @@ class io {
 
         file_put_contents($this->composerJsonFile, json_encode($this->composerJson, JSON_PRETTY_PRINT));
     }
+
 
 
     function scan($dir = ''){
@@ -119,6 +122,7 @@ class io {
     }
 
 
+
     function checkNameSpaces(){
         foreach ($this->struct as $dir => $extract) {
             extract($extract);
@@ -135,8 +139,8 @@ class io {
     function setNameSpace($dir, $fileName, $namespace){
         $this->updateFileClass($dir, $fileName, $namespace);
 
-        if ($dir){
-            $firstDir = explode('/', $dir)[1];
+        // if ($dir){
+            $firstDir = explode('/', trim($dir, '/'))[0];
 
 
             if (!isset($this->links[$firstDir]))
@@ -148,7 +152,7 @@ class io {
                 'namespace' => $namespace,
                 'unique' => false,
             ];
-        }
+        // }
     }
 
 
@@ -165,27 +169,6 @@ class io {
     }
 
 
-
-    function rrmdir($dir){
-        if (is_dir($dir)){
-            $objects = scandir($dir);
-
-            foreach ($objects as $object){
-                if ($object != '.' && $object != '..'){
-                    if (filetype($dir.'/'.$object) == 'dir') {
-                        $this->rrmdir($dir.'/'.$object);
-                    }
-                    else {unlink($dir.'/'.$object);}
-                }
-            }
-
-            reset($objects);
-            rmdir($dir);
-        }
-    }
-
-
-
     function createDiLinks(){
         $to = $this->config['to'];
         if (!str_starts_with($to, '_'))
@@ -196,10 +179,15 @@ class io {
 
         $rootNameSpace = $this->config['name'];
         foreach ($this->links as $fileLinkName => $methods) {
+
+
             $activeNamespace = "$rootNameSpace\\$to\\";
             $linkDir = "$rootNameSpace/$to/";
 
             $this->namespaces[$activeNamespace] = $linkDir;
+
+            if (!$fileLinkName)
+                continue;
 
             $list = [];
             $use = [];
@@ -232,8 +220,6 @@ class io {
 
             
 
-            
-
             if (!file_exists($linkDir))
                 mkdir($linkDir, 0777, true);
 
@@ -246,5 +232,23 @@ class io {
     function error($message){
         fwrite(STDERR, $message);
         die(1);
+    }
+
+    function rrmdir($dir){
+        if (is_dir($dir)){
+            $objects = scandir($dir);
+
+            foreach ($objects as $object){
+                if ($object != '.' && $object != '..'){
+                    if (filetype($dir.'/'.$object) == 'dir') {
+                        $this->rrmdir($dir.'/'.$object);
+                    }
+                    else {unlink($dir.'/'.$object);}
+                }
+            }
+
+            reset($objects);
+            rmdir($dir);
+        }
     }
 }

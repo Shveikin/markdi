@@ -9,7 +9,8 @@
             "tests\\_markers\\": "tests\/_markers\/",
             "tests\\fibers\\": "tests\/fibers\/",
             "tests\\models\\": "tests\/models\/",
-            "tests\\viewz\\": "tests\/viewz\/"
+            "tests\\viewz\\": "tests\/viewz\/",
+            "tests\\": "tests\/"
         }
     },
     "authors": [
