@@ -1,10 +1,10 @@
 <?php
-namespace tests\_markers;
+namespace tests\_markers\;
 use markdi\markdi;
-use tests\models\GModel;
+use tests\models\log;
 
 trait models {
 	use markdi;
 
-	function gModel():GModel{return new GModel;} 
+	function log():log{return new log;} 
 }

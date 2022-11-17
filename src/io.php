@@ -2,9 +2,6 @@
 
 namespace markdi;
 
-use PhpParser\NodeDumper;
-use PhpParser\ParserFactory;
-
 class io {
     use container;
     use markers;
@@ -21,11 +18,13 @@ class io {
     private $links = [];
     private $namespaces = [];
     private $composerJson;
+    private $composerJsonFile;
 
 
     protected function run($path){
         if ($composerRoot = $this->findComposerJson($path)){
-            $this->composerJson = json_decode(file_get_contents("$composerRoot/composer.json"), true);
+            $this->composerJsonFile = "$composerRoot/composer.json";
+            $this->composerJson = json_decode(file_get_contents($this->composerJsonFile), true);
             $this->composerName = isset($this->composerJson['name'])?$this->composerJson['name']:'myapp';
             if (isset($this->composerJson['markdi'])){
                 $this->setConfig($this->composerJson['markdi']);
@@ -71,6 +70,23 @@ class io {
         $this->entry = $root . '/' . $this->config['from'];
         $this->scan();
         $this->checkNameSpaces();
+        $this->changeComposerJson();
+    }
+
+
+    function changeComposerJson(){
+        if (!isset($this->composerJson['autoload']))
+            $this->composerJson['autoload'] = [];
+
+        if (!isset($this->composerJson['autoload']['psr-4']))
+            $this->composerJson['autoload']['psr-4'] = [];
+
+        $this->composerJson['autoload']['psr-4'] = array_merge(
+            $this->composerJson['autoload']['psr-4'],
+            $this->namespaces
+        );
+
+        file_put_contents($this->composerJsonFile, json_encode($this->composerJson, JSON_PRETTY_PRINT));
     }
 
 
@@ -117,7 +133,6 @@ class io {
 
 
     function setNameSpace($dir, $fileName, $namespace){
-        
         $this->updateFileClass($dir, $fileName, $namespace);
 
         if ($dir){
@@ -137,6 +152,7 @@ class io {
     }
 
 
+
     function updateFileClass($dir, $fileName, $namespace){
         $code = file_get_contents("{$this->entry}$dir/$fileName");
 
@@ -150,19 +166,50 @@ class io {
 
 
 
+    function rrmdir($dir){
+        if (is_dir($dir)){
+            $objects = scandir($dir);
+
+            foreach ($objects as $object){
+                if ($object != '.' && $object != '..'){
+                    if (filetype($dir.'/'.$object) == 'dir') {
+                        $this->rrmdir($dir.'/'.$object);
+                    }
+                    else {unlink($dir.'/'.$object);}
+                }
+            }
+
+            reset($objects);
+            rmdir($dir);
+        }
+    }
+
+
+
     function createDiLinks(){
         $to = $this->config['to'];
         if (!str_starts_with($to, '_'))
             $to = "_$to";
 
+        if (file_exists("$this->entry/$to"))
+            $this->rrmdir("$this->entry/$to");
+
         $rootNameSpace = $this->config['name'];
         foreach ($this->links as $fileLinkName => $methods) {
+            $activeNamespace = "$rootNameSpace\\$to\\";
+            $linkDir = "$rootNameSpace/$to/";
+
+            $this->namespaces[$activeNamespace] = $linkDir;
+
             $list = [];
             $use = [];
             foreach ($methods as $data) {
                 $className = explode('.', $data['file'])[0];
                 $method = lcfirst($className);
                 $namespace = str_replace('/', '\\', $data['namespace']);
+                
+                $this->namespaces[$namespace] = $data['namespace'];
+
                 $use[] = "use {$namespace}{$className};";
                 $list[] = "\tfunction $method():{$className}{return new {$className};} ";
             }
@@ -172,7 +219,7 @@ class io {
 
             $content = <<<CODE
             <?php
-            namespace $rootNameSpace\\$to;
+            namespace $activeNamespace;
             use markdi\markdi;
             $useStr
 
@@ -183,7 +230,10 @@ class io {
             }
             CODE;
 
-            $linkDir = "{$this->entry}/$to";
+            
+
+            
+
             if (!file_exists($linkDir))
                 mkdir($linkDir, 0777, true);
 
