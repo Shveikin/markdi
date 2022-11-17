@@ -1,10 +1,7 @@
 <?php
 
+namespace tests\view;
 
 class MainView {
-
-    function __constructor(){
-        echo "create MainView \n";
-    }
 
 }

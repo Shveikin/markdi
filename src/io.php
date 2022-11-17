@@ -7,6 +7,7 @@ use PhpParser\ParserFactory;
 
 class io {
     use container;
+    use markers;
 
     private $verbose = false;
 
@@ -116,11 +117,13 @@ class io {
 
 
     function setNameSpace($dir, $fileName, $namespace){
-        echo "{$this->entry}$dir/$fileName | $namespace \n";
+        
+        $this->updateFileClass($dir, $fileName, $namespace);
 
         if ($dir){
             $firstDir = explode('/', $dir)[1];
-            
+
+
             if (!isset($this->links[$firstDir]))
                 $this->links[$firstDir] = [];
 
@@ -131,6 +134,18 @@ class io {
                 'unique' => false,
             ];
         }
+    }
+
+
+    function updateFileClass($dir, $fileName, $namespace){
+        $code = file_get_contents("{$this->entry}$dir/$fileName");
+
+        $className = explode('.', $fileName)[0];
+        $this->parsfab->parse($code);
+        $this->parsfab->namespace(str_replace('/', '\\',trim($namespace, '/')), $className);
+        $code2 = $this->parsfab->getCode();
+
+        file_put_contents("{$this->entry}$dir/$fileName", $code2);
     }
 
 
@@ -152,7 +167,7 @@ class io {
                 $list[] = "\tfunction $method():{$className}{return new {$className};} ";
             }
             $listStr = implode("\n", $list);
-            $useStr = implode("\n", $use);
+            $useStr  = implode("\n", $use);
 
 
             $content = <<<CODE
