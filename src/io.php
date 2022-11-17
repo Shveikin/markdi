@@ -2,8 +2,11 @@
 
 namespace markdi;
 
-use PhpParser\NodeDumper;
+use PhpParser\BuilderFactory;
+use PhpParser\Node;
+use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter;
 
 class io {
     use container;
@@ -20,6 +23,7 @@ class io {
     private $links = [];
     private $namespaces = [];
     private $composerJson;
+    private $traverser;
 
 
     protected function run($path){
@@ -74,8 +78,8 @@ class io {
 
 
     function scan($dir = ''){
-        if ($this->verbose)
-            echo "$dir\n";
+        // if ($this->verbose)
+        //     echo "$dir\n";
 
         foreach (scandir("$this->entry/$dir") as $elm) {
             if (in_array($elm, ['.', '..']))
@@ -94,8 +98,8 @@ class io {
                         ];
                     
                     $this->struct[$dir]['files'][] = $elm;
-                    if ($this->verbose)
-                        echo " - $elm\n";
+                    // if ($this->verbose)
+                    //     echo " - $elm\n";
                 }
             }
         }
@@ -103,6 +107,7 @@ class io {
 
 
     function checkNameSpaces(){
+
         foreach ($this->struct as $dir => $extract) {
             extract($extract);
             foreach ($files as $fileName) {
@@ -113,14 +118,40 @@ class io {
         $this->createDiLinks();
     }
 
+    private function fileChangeNameSpace($dir, $fileName, $namespace){
+        $parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
+        $traverser = new NodeTraverser;
+        $prettyPrinter = new PrettyPrinter\Standard;
+
+        try {
+            $code = file_get_contents("{$this->entry}$dir/$fileName"); 
+            $ast = $parser->parse($code);
+
+
+            $traverser->addVisitor(new nsconv(str_replace('/', '\\', trim($namespace, '/'))));
+
+            $ast = $traverser->traverse($ast);
+            
+
+            echo "result::\n" . $prettyPrinter->prettyPrintFile($ast);
+
+
+        } catch (\Error $error) {
+            echo "Parse error: {$error->getMessage()}\n";
+            return;
+        }
+    }
+
 
 
     function setNameSpace($dir, $fileName, $namespace){
-        echo "{$this->entry}$dir/$fileName | $namespace \n";
+        // echo "{$this->entry}$dir/$fileName | $namespace \n";
 
         if ($dir){
             $firstDir = explode('/', $dir)[1];
-            
+
+            $this->fileChangeNameSpace($dir, $fileName, $namespace);
+
             if (!isset($this->links[$firstDir]))
                 $this->links[$firstDir] = [];
 
@@ -132,6 +163,10 @@ class io {
             ];
         }
     }
+
+
+
+
 
 
 

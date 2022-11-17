@@ -1,5 +1,6 @@
 <?php
 
+namespace next\test\hest;
 
 class MainModel {
 
