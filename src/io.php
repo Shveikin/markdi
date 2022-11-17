@@ -138,21 +138,26 @@ class io {
 
     function setNameSpace($dir, $fileName, $namespace){
         $this->updateFileClass($dir, $fileName, $namespace);
+        $dir = trim($dir, '/');
 
-        // if ($dir){
-            $firstDir = explode('/', trim($dir, '/'))[0];
-
-
-            if (!isset($this->links[$firstDir]))
-                $this->links[$firstDir] = [];
+        $firstDir = explode('/', $dir)[0];
 
 
-            $this->links[$firstDir][] = [
-                'file' => $fileName,
-                'namespace' => $namespace,
-                'unique' => false,
-            ];
-        // }
+        if (!isset($this->links[$firstDir]))
+            $this->links[$firstDir] = [];
+
+
+        $this->links[$firstDir][] = [
+            'file' => $fileName,
+            'namespace' => $namespace,
+            'unique' => false,
+        ];
+
+        
+        $activeFolder = $this->config['from'] . "/";
+        if ($dir)
+            $activeFolder .= "$dir/";
+        $this->namespaces[str_replace('/', '\\', $namespace)] = $activeFolder;
     }
 
 
@@ -177,14 +182,15 @@ class io {
         if (file_exists("$this->entry/$to"))
             $this->rrmdir("$this->entry/$to");
 
-        $rootNameSpace = $this->config['name'];
+        $rootNameSpace = str_replace('/', '\\', $this->config['name']);
+        $rootNameFolder = $this->config['from'];
         foreach ($this->links as $fileLinkName => $methods) {
 
 
-            $activeNamespace = "$rootNameSpace\\$to\\";
-            $linkDir = "$rootNameSpace/$to/";
+            $activeNamespace = "$rootNameSpace\\$to";
+            $linkDir = "$rootNameFolder/$to/";
 
-            $this->namespaces[$activeNamespace] = $linkDir;
+            $this->namespaces["$activeNamespace\\"] = $linkDir;
 
             if (!$fileLinkName)
                 continue;
