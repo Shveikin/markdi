@@ -45,4 +45,10 @@ trait markdi
 
         return false;
     }
+
+
+
+    public function RESET_ALL_PROPS(){
+        MP::RESET();
+    }
 }

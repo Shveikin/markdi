@@ -7,40 +7,49 @@ class MP {
     private $containers = [];
     private $reg = [];
 
-    static function init(){
-        if (self::$container == false)
-            self::$container = new self();
-    }
 
     static function GET(...$props){
-        if (self::$container == false) {
-            self::$container = new self();
-        }
-
         $class = isset($props['class'])?$props['class']:(isset($props[0])?$props[0]:false);
         $alias = isset($props['alias'])?$props['alias']:(isset($props[1])?$props[1]:false);
         $constructor = isset($props['constructor'])?$props['constructor']:(isset($props[2])?$props[2]:false);
 
         if ($class!=false){
-            return self::$container->class($class, $alias, (array)$constructor);
+            $result = self::MAIN()->class($class, $alias, (array)$constructor);
+        } else {
+            $result = self::MAIN();
+        }
+
+        return $result;
+    }
+
+    static function DI($from, $alias){
+        return self::MAIN()->autodi($from, $alias);
+    }
+
+
+    static function MAIN(){
+        if (self::$container == false) {
+            self::$container = new self();
         }
 
         return self::$container;
     }
 
-    static function DI($from, $alias){
-        if (self::$container == false) {
-            self::$container = new self();
-        }
-
-        return self::$container->autodi($from, $alias);
-    }
 
     function autodi($from, $alias){
         if (!isset($this->containers[$alias])){
             $this->containers[$alias] = $from->{$alias}();
         }
         return $this->containers[$alias];
+    }
+
+
+    static function RESET(){
+        self::MAIN()->reset_all_props();
+    }
+
+    private function reset_all_props(){
+        $this->containers = [];
     }
 
     function autoprops($class, $alias, &$constructor):array {
