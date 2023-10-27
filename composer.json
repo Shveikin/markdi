@@ -5,16 +5,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "markdi\\": "src\/",
-            "tests\\_markers\\": "tests\/_markers\/",
-            "tests\\fibers\\": "tests\/fibers\/",
-            "tests\\models\\": "tests\/models\/",
-            "tests\\viewz\\": "tests\/viewz\/",
-            "tests\\": "tests\/",
-            "test\\": "test\/",
-            "test\\coolers\\": "test\/coolers\/",
-            "test\\os\\": "test\/os\/",
-            "test\\_markers\\": "test\/_markers\/"
+            "markdi\\": "src\/"
         }
     },
     "authors": [
@@ -22,12 +13,5 @@
             "name": "Ilya Shveikin",
             "email": "no_soap_0@mail.ru"
         }
-    ],
-    "require-dev": {
-        "phpunit\/phpunit": "^9.5"
-    },
-    "bin": [
-        "bin\/markdi"
-    ],
-    "markdi": "test"
+    ]
 }
