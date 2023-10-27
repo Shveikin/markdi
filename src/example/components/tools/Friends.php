@@ -14,6 +14,10 @@ class Friends {
 
 
     function seyHello(){
-        echo "hello {$this->user->name}\n";
+        return "hello {$this->getFriendName()}";
+    }
+
+    function getFriendName(){
+        return $this->user->name;
     }
 }

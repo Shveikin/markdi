@@ -13,7 +13,7 @@ class User {
     {}
 
     function helloFromFriends(){
-        $this->friends->seyHello();
+        return $this->friends->seyHello();
     }
 
 }
