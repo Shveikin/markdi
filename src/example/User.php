@@ -16,4 +16,9 @@ class User {
         return $this->friends->seyHello();
     }
 
+
+    function ___get($var){
+        return "$var - is var";
+    }
+
 }

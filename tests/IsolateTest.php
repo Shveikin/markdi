@@ -5,7 +5,7 @@ declare(strict_types=1);
 use markdi\example\User;
 use markdi\MarkTestCase;
 
-final class GreeterTest extends MarkTestCase
+final class IsolateTest extends MarkTestCase
 {
     public function testFirst(): void
     {

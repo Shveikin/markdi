@@ -23,6 +23,9 @@ trait markdi
                 return Container::get($alias);
             else
                 return Container::set($alias, $this->$alias());
+        else
+            if (method_exists($this, '___get')) 
+                return $this->___get($alias);
 
         throw new \Exception("$alias - not found");
     }
