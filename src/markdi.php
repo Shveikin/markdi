@@ -26,8 +26,6 @@ trait markdi
         else
             if (method_exists($this, '___get')) 
                 return $this->___get($alias);
-
-        throw new \Exception("$alias - not found");
     }
 
     private function super(string $alias){
