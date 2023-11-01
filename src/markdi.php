@@ -29,4 +29,8 @@ trait markdi
 
         throw new \Exception("$alias - not found");
     }
+
+    private function super(string $alias){
+        return fn($class) => Container::set($alias, $class);
+    }
 }
