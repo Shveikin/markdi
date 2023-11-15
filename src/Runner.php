@@ -13,7 +13,7 @@ class Runner
     private $out;
 
 
-    function __construct($dir ,$psr4, string $out = 'markers')
+    function __construct($dir, $psr4, string $out = 'markers')
     {
         $this->out = $out;
         foreach ($psr4 as $namespace => $folder) {
@@ -58,6 +58,7 @@ class Runner
         $full = "$namespace\\$class";
         $title = lcfirst($class);
         $mode = Mark::GLOBAL;
+        $args = [];
 
         try {
             $reflection = new \ReflectionClass($full);
@@ -71,6 +72,7 @@ class Runner
                 $mark = $attr[0]->newInstance();
                 $title = $mark->title;
                 $mode = $mark->mode;
+                $args = $mark->args;
             }
         } catch (\Throwable $th) {
             echo "ignore - $class\n";
@@ -83,8 +85,9 @@ class Runner
         return [
             'full' => $full,
             'title' => $title,
-            'mode' => $mode,
             'class' => $class,
+            'mode' => $mode,
+            'args' => $args,
         ];
     }
 
@@ -97,7 +100,7 @@ class Runner
         }
     }
 
-    private function writeMarkers($root, $path,$list)
+    private function writeMarkers($root, $path, $list)
     {
         if (file_exists("$path/_$this->out"))
             $this->removeFolder("$path/_$this->out");
@@ -115,12 +118,15 @@ class Runner
                 'title' => $title,
                 'mode' => $mode,
                 'class' => $class,
+                'args' => $args,
             ]) {
+
+                $props = $this->getProps($args, $title);
 
                 $namespaces .= "use $full;\n";
                 $varibles   .= " * @property-read $class \$$title\n";
                 $modeSymbol = $mode == Mark::LOCAL ? '_' : '';
-                $methods    .= "   function $modeSymbol$title(): $class{ return new $class; }\n";
+                $methods    .= "   function $modeSymbol$title(): $class{ return new $class$props; }\n";
             }
 
             file_put_contents(
@@ -142,6 +148,27 @@ class Runner
             );
         }
     }
+
+    private function getProps(array $args, string $title)
+    {
+        $result = [];
+
+        foreach ($args as $argument) {
+            switch ($argument) {
+                case 'parent':
+                    $result[] = '$this';
+                    break;
+
+                case 'super':
+                    $result[] = "\$this->super('$title')";
+                    break;
+
+                default:
+                    $result[] = $argument;
+            }
+        }
+
+        $resultStr = implode(', ', $result);
+        return $resultStr ? "($resultStr)" : '';
+    }
 }
-
-

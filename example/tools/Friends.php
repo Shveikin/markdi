@@ -1,10 +1,12 @@
 <?php
 
 namespace markexample\tools;
+
+use markdi\Mark;
 use markexample\User;
 
 
-
+#[Mark('friends', ['parent'])]
 class Friends {
 
     

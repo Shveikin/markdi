@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use markdi\example\User;
+use markexample\User;
 use markdi\MarkTestCase;
 
 final class MagicTest extends MarkTestCase

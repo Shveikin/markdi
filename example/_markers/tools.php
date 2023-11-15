@@ -10,6 +10,6 @@ use markexample\tools\Friends;
 trait tools {
     use markdi;
 
-   function friends(): Friends{ return new Friends; }
+   function friends(): Friends{ return new Friends($this); }
 
 }

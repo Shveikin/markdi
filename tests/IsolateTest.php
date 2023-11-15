@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use markdi\example\User;
 use markdi\MarkTestCase;
+use markexample\User;
 
 final class IsolateTest extends MarkTestCase
 {
