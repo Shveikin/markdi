@@ -1,0 +1,37 @@
+#!/usr/bin/env php
+<?php
+use markdi\Runner;
+
+
+
+// Определите путь к файлу composer.json
+$scriptDir = realpath(__DIR__);
+require $scriptDir . '/../vendor/autoload.php';
+$composerJsonPath = findComposerJson($scriptDir);
+
+if ($composerJsonPath) {
+
+    $composer = json_decode(file_get_contents("$composerJsonPath/composer.json"), true);
+    new Runner($composerJsonPath, $composer['autoload']['psr-4'], 'markers');
+
+} else {
+    echo "Composer.json not found.\n";
+    exit(1);
+}
+
+// Функция для поиска файла composer.json вверх по директориям
+function findComposerJson($dir)
+{
+    while ($dir !== '/' && $dir !== \DIRECTORY_SEPARATOR) {
+        $composerJsonPath = $dir . \DIRECTORY_SEPARATOR . 'composer.json';
+        if (file_exists($composerJsonPath)) {
+            return $dir;
+        }
+
+        $dir = \dirname($dir);
+    }
+
+    return null;
+}
+
+exit(0);

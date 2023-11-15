@@ -1,21 +1,23 @@
 <?php
 
+namespace markdi;
+
 use markdi\Mark;
 
-require './vendor/autoload.php';
 
 
-class MarkHandler
+
+class Runner
 {
 
     private $out;
 
 
-    function __construct($composer, string $out = 'markers')
+    function __construct($dir ,$psr4, string $out = 'markers')
     {
         $this->out = $out;
-        foreach ($composer['autoload']['psr-4'] as $namespace => $folder) {
-            $this->check(__DIR__ . "/$folder", $namespace);
+        foreach ($psr4 as $namespace => $folder) {
+            $this->check($dir . "/$folder", $namespace);
         }
     }
 
@@ -25,7 +27,7 @@ class MarkHandler
 
         $markers = array_diff(scandir($path), ['.', '..']);
         foreach ($markers as $marker) {
-            if (str_starts_with($marker, '_'))
+            if (str_starts_with($marker, '_') || !is_dir("$path/$marker"))
                 continue;
 
             $list[$marker] = [];
@@ -34,7 +36,8 @@ class MarkHandler
         }
 
 
-        $this->writeMarkers($namespace, $path, $list);
+        if (!empty($list))
+            $this->writeMarkers($namespace, $path, $list);
     }
 
     private function findClasses(&$list, $namespace, $path)
@@ -57,7 +60,7 @@ class MarkHandler
         $mode = Mark::GLOBAL;
 
         try {
-            $reflection = new ReflectionClass($full);
+            $reflection = new \ReflectionClass($full);
             if ($reflection->isAbstract()) {
                 echo "ignore - abstract $class\n";
                 return;
@@ -71,6 +74,7 @@ class MarkHandler
             }
         } catch (\Throwable $th) {
             echo "ignore - $class\n";
+            echo $th->getMessage() . "\n";
             return;
         }
 
@@ -140,5 +144,4 @@ class MarkHandler
     }
 }
 
-$composer = json_decode(file_get_contents('composer.json'), true);
-new MarkHandler($composer, 'test');
+

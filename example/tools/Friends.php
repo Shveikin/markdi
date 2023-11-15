@@ -1,10 +1,13 @@
 <?php
 
-namespace markdi\example\components\tools;
+namespace markexample\tools;
+use markexample\User;
 
-use markdi\example\User;
+
 
 class Friends {
+
+    
 
     function __construct
     (

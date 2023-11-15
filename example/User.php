@@ -1,8 +1,8 @@
 <?php
 
-namespace markdi\example;
+namespace markexample;
+use markexample\_test\tools;
 
-use markdi\example\components\markers\tools;
 
 class User {
     use tools;
