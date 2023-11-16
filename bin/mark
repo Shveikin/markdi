@@ -3,11 +3,8 @@
 use markdi\Runner;
 
 
-
-// Определите путь к файлу composer.json
-$scriptDir = realpath(__DIR__);
-require $scriptDir . '/../vendor/autoload.php';
-$composerJsonPath = findComposerJson($scriptDir);
+require $GLOBALS['_composer_autoload_path'];
+$composerJsonPath = findComposerJson($GLOBALS['_composer_autoload_path']);
 
 if ($composerJsonPath) {
 
