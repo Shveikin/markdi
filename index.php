@@ -1,6 +1,6 @@
 <?php
 
-use markdi\example\User;
+use markexample\User;
 
 require "./vendor/autoload.php";
 

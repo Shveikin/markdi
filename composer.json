@@ -17,14 +17,18 @@
     ],
     "scripts": {
         "post-install-cmd": [
-            "chmod +x bin/mark"
+            "chmod +x bin\/mark",
+            "markdi\\Commands::createMarkScript"
         ],
         "post-update-cmd": [
-            "chmod +x bin/mark"
+            "chmod +x bin\/mark",
+            "markdi\\Commands::createMarkScript"
         ]
     },
-    "bin": ["bin/mark"],
+    "bin": [
+        "bin\/mark"
+    ],
     "require-dev": {
-        "phpunit/phpunit": "^10.4"
+        "phpunit\/phpunit": "^10.4"
     }
 }
