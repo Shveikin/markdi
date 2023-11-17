@@ -30,9 +30,10 @@ class Runner
             if (str_starts_with($marker, '_') || !is_dir("$path/$marker"))
                 continue;
 
-            $list[$marker] = [];
             $current_namespace = str_replace("\\\\", "\\", "$namespace\\$marker");
             $this->findClasses($list[$marker], "$current_namespace", "$path$marker");
+            if (!$list[$marker])
+                unset($list[$marker]);
         }
 
 
@@ -44,11 +45,18 @@ class Runner
     {
         $files = array_diff(scandir($path), ['.', '..']);
         foreach ($files as $file) {
+            if (is_dir("$path/$file"))
+                continue;
+
             $info = pathinfo("$path/$file");
             ['filename' => $class, 'extension' => $extension] = $info;
             if ($extension == 'php')
-                if ($classInfo = $this->getClassInfo($namespace, $class))
+                if ($classInfo = $this->getClassInfo($namespace, $class)){
+                    if (!$list)
+                        $list = [];
+
                     $list[] = $classInfo;
+                }
         }
     }
 
@@ -66,6 +74,10 @@ class Runner
                 echo "ignore - abstract $class\n";
                 return;
             }
+
+            $notMark = $reflection->getAttributes(NotMark::class);
+            if (!empty($notMark))
+                return;
 
             $attr = $reflection->getAttributes(Mark::class);
             if (!empty($attr)) {
@@ -105,6 +117,9 @@ class Runner
         if (file_exists("$path/_$this->out"))
             $this->removeFolder("$path/_$this->out");
 
+        if (empty($list))
+            return;
+
         mkdir("$path/_$this->out");
 
 
@@ -126,7 +141,7 @@ class Runner
                 $namespaces .= "use $full;\n";
                 $varibles   .= " * @property-read $class \$$title\n";
                 $modeSymbol = $mode == Mark::LOCAL ? '_' : '';
-                $methods    .= "   function $modeSymbol$title(): $class{ return new $class$props; }\n";
+                $methods    .= "   function $modeSymbol$title(): $class { return new $class$props; }\n";
             }
 
             file_put_contents(
