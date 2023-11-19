@@ -160,7 +160,6 @@ class Runner
                 public string $class,
                 public string $mode,
                 public array $args,
-
             ) {
             }
         };
@@ -181,16 +180,17 @@ class Runner
             $namespaces = "";
             $varibles = "";
             $methods = "";
+
             foreach ($classes as $class) {
-                $props = $this->getProps($class->args, $class->title);
+                $props = $this->getProps($class->args, $class->title, $class->mode);
                 $namespaces .= "use $class->full;\n";
+
                 if ($class->mode != Mark::INSTANCE)
                     $varibles   .= " * @property-read $class->class \${$class->title}\n";
 
-                $mehodProps = $class->mode == Mark::INSTANCE ? $props : '()';
-
-                $modeSymbol = $class->mode == Mark::LOCAL ? '_' : '';
-                $methods    .= "   function $modeSymbol{$class->title}$mehodProps: {$class->class} { return new {$class->class}$props; }\n";
+                $mehodProps = $class->mode == Mark::INSTANCE ? $this->wrap(array_keys($class->args)) : '()';
+                $modeSymbol = $class->mode == Mark::LOCAL    ? '_'    : '';
+                $methods   .= "   function $modeSymbol{$class->title}$mehodProps: {$class->class} { return new {$class->class}$props; }\n";
             }
 
             $code = <<<CODE
@@ -212,8 +212,11 @@ class Runner
         }
     }
 
-    private function getProps(array $args, string $title)
+    private function getProps(array $args, string $title, int $mode)
     {
+        if ($mode == Mark::INSTANCE)
+            return $this->wrap($args);
+
         $result = [];
 
         foreach ($args as $argument) {
@@ -231,7 +234,13 @@ class Runner
             }
         }
 
-        $resultStr = implode(', ', $result);
+        return $this->wrap($result);
+    }
+
+
+    private function wrap(array $props)
+    {
+        $resultStr = implode(', ', $props);
         return $resultStr ? "($resultStr)" : '';
     }
 }
