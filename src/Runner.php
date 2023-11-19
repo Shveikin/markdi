@@ -2,8 +2,6 @@
 
 namespace markdi;
 
-use markdi\Mark;
-
 
 
 
@@ -21,11 +19,37 @@ class Runner
         }
     }
 
+
+    private function clearOutput($path)
+    {
+        if (file_exists("$path/_$this->out")) {
+            $this->removeFolder("$path/_$this->out");
+        }
+
+        if (!file_exists("$path/_$this->out"))
+            mkdir("$path/_$this->out", 0777, true);
+    }
+
     private function check($path, $namespace)
     {
+        $this->clearOutput($path);
+
         $list = [];
 
         $markers = array_diff(scandir($path), ['.', '..']);
+
+        // создаю пустышки
+        foreach ($markers as $marker) {
+            if (str_starts_with($marker, '_') || !is_dir("$path/$marker"))
+                continue;
+            $current_namespace = str_replace("\\\\", "\\", "$namespace\\_$this->out");
+            file_put_contents("$path/_$this->out/$marker.php", <<<PHP
+            <?php namespace $current_namespace;
+            trait $marker{}
+            PHP);
+        }
+
+        // анализирую классы
         foreach ($markers as $marker) {
             if (str_starts_with($marker, '_') || !is_dir("$path/$marker"))
                 continue;
@@ -43,6 +67,8 @@ class Runner
 
     private function findClasses(&$list, $namespace, $path)
     {
+
+
         $files = array_diff(scandir($path), ['.', '..']);
         foreach ($files as $file) {
             if (is_dir("$path/$file"))
@@ -51,12 +77,61 @@ class Runner
             $info = pathinfo("$path/$file");
             ['filename' => $class, 'extension' => $extension] = $info;
             if ($extension == 'php')
-                if ($classInfo = $this->getClassInfo($namespace, $class)){
+                if ($classInfo = $this->getClassInfo($namespace, $class)) {
                     if (!$list)
                         $list = [];
 
                     $list[] = $classInfo;
                 }
+        }
+    }
+
+
+
+    private function bindProps($full, &$title, &$mode, &$args)
+    {
+        $reflection = new \ReflectionClass($full);
+        if ($reflection->isAbstract())
+            throw new \Exception("abstract class", 0);
+
+
+
+        $notMark = $reflection->getAttributes(NotMark::class);
+        if (!empty($notMark))
+            return;
+
+
+        $attr = $reflection->getAttributes(Mark::class);
+        if (!empty($attr)) {
+            $mark = $attr[0]->newInstance();
+            if ($mark->title)
+                $title = $mark->title;
+
+            $mode = $mark->mode;
+            $args = $mark->args;
+            return;
+        }
+
+
+        $attr = $reflection->getAttributes(MarkInstance::class);
+        if (!empty($attr)) {
+            $mark = $attr[0]->newInstance();
+            if ($mark->title)
+                $title = $mark->title;
+
+            $mode = Mark::INSTANCE;
+
+
+            $constructor = $reflection->getConstructor();
+            if (!$constructor)
+                return;
+
+            $props = $constructor->getParameters();
+            foreach ($props as $prop) {
+                $full = $prop->getType() . ' $' . $prop->getName();
+                $args[$full] = '$' . $prop->getName();
+            }
+            return;
         }
     }
 
@@ -69,38 +144,26 @@ class Runner
         $args = [];
 
         try {
-            $reflection = new \ReflectionClass($full);
-            if ($reflection->isAbstract()) {
-                echo "ignore - abstract $class\n";
-                return;
-            }
-
-            $notMark = $reflection->getAttributes(NotMark::class);
-            if (!empty($notMark))
-                return;
-
-            $attr = $reflection->getAttributes(Mark::class);
-            if (!empty($attr)) {
-                $mark = $attr[0]->newInstance();
-                $title = $mark->title;
-                $mode = $mark->mode;
-                $args = $mark->args;
-            }
+            $this->bindProps($full, $title, $mode, $args);
         } catch (\Throwable $th) {
             echo "ignore - $class\n";
-            echo $th->getMessage() . "\n";
+            echo "\t> " . $th->getMessage() . "\n";
             return;
         }
 
 
+        return new class($full, $title, $class, $mode, $args)
+        {
+            function __construct(
+                public string $full,
+                public string $title,
+                public string $class,
+                public string $mode,
+                public array $args,
 
-        return [
-            'full' => $full,
-            'title' => $title,
-            'class' => $class,
-            'mode' => $mode,
-            'args' => $args,
-        ];
+            ) {
+            }
+        };
     }
 
     private function removeFolder(string $path)
@@ -114,39 +177,23 @@ class Runner
 
     private function writeMarkers($root, $path, $list)
     {
-        if (file_exists("$path/_$this->out"))
-            $this->removeFolder("$path/_$this->out");
-
-        if (empty($list))
-            return;
-
-        mkdir("$path/_$this->out");
-
-
-
         foreach ($list as $marker => $classes) {
             $namespaces = "";
             $varibles = "";
             $methods = "";
-            foreach ($classes as [
-                'full' => $full,
-                'title' => $title,
-                'mode' => $mode,
-                'class' => $class,
-                'args' => $args,
-            ]) {
+            foreach ($classes as $class) {
+                $props = $this->getProps($class->args, $class->title);
+                $namespaces .= "use $class->full;\n";
+                if ($class->mode != Mark::INSTANCE)
+                    $varibles   .= " * @property-read $class->class \${$class->title}\n";
 
-                $props = $this->getProps($args, $title);
+                $mehodProps = $class->mode == Mark::INSTANCE ? $props : '()';
 
-                $namespaces .= "use $full;\n";
-                $varibles   .= " * @property-read $class \$$title\n";
-                $modeSymbol = $mode == Mark::LOCAL ? '_' : '';
-                $methods    .= "   function $modeSymbol$title(): $class { return new $class$props; }\n";
+                $modeSymbol = $class->mode == Mark::LOCAL ? '_' : '';
+                $methods    .= "   function $modeSymbol{$class->title}$mehodProps: {$class->class} { return new {$class->class}$props; }\n";
             }
 
-            file_put_contents(
-                "$path/_$this->out/$marker.php",
-                <<<CODE
+            $code = <<<CODE
                 <?php
                 namespace {$root}_{$this->out};
                 use markdi\markdi;
@@ -159,8 +206,9 @@ class Runner
 
                 $methods
                 }
-                CODE
-            );
+                CODE;
+
+            file_put_contents("$path/_$this->out/$marker.php", $code);
         }
     }
 
