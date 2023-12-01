@@ -128,7 +128,16 @@ class Runner
 
             $props = $constructor->getParameters();
             foreach ($props as $prop) {
+                $defaultValue = null;
+                if ($prop->isDefaultValueAvailable()) {
+                    $defaultValue = $prop->getDefaultValue();
+                }
+
                 $full = $prop->getType() . ' $' . $prop->getName();
+
+                if (!is_null($defaultValue)) {
+                    $full .= " = " . var_export($defaultValue, true);
+                }
                 $args[$full] = '$' . $prop->getName();
             }
             return;
