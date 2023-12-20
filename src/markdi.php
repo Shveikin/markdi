@@ -5,6 +5,9 @@ namespace markdi;
 
 trait markdi
 {
+    /**
+     * @xdebug_never
+     */
     public function __get($alias){
         if (!property_exists($this, $alias)) 
             $this->$alias = $this->__getAlias__($alias);
