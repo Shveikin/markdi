@@ -5,8 +5,13 @@ namespace markdi;
 class ReflectionMark
 {
 
-    public string $full;
-    public string $title;
+    public string $prop;
+    public string $namespace;
+    public string $shortName;
+
+    public string $marker;
+    public bool $isMarkerInit = false;
+
     public int $mode = Mark::GLOBAL;
     public array $args = [];
     public $exception = false;
@@ -14,14 +19,10 @@ class ReflectionMark
 
 
 
-    function __construct(public $namespace, public $class)
+    function __construct(public string $className)
     {
-        $this->full = "$namespace\\$class";
-        $title = lcfirst($class);
-
-
         try {
-            $this->bindProps();
+            $this->handle();
         } catch (\Throwable $th) {
             $this->exception = $th->getMessage();
         }
@@ -30,13 +31,20 @@ class ReflectionMark
 
 
 
-    private function bindProps()
+    private function handle()
     {
-        $reflection = new \ReflectionClass($this->full);
+        $reflection = new \ReflectionClass($this->className);
+        
+        $this->namespace = $reflection->getNamespaceName();
+        $this->shortName = $reflection->getShortName();
+        $this->marker = $this->getMarkerFromNamespace();
+        $this->isMarkerInit = $this->checkMarkerIsInit();
+        $this->prop = lcfirst($this->shortName);
+        
+
         if ($reflection->isAbstract()) {
             $this->exception = "abstract class";
             return;
-            throw new \Exception("abstract class", 0);
         }
 
 
@@ -48,21 +56,21 @@ class ReflectionMark
 
         $attr = $reflection->getAttributes(Mark::class);
         if (!empty($attr)) {
-            $mark = $attr[0]->newInstance();
-            if ($mark->title)
-                $this->title = $mark->title;
+            $classMarkAttribute = $attr[0]->newInstance();
+            if ($classMarkAttribute->title)
+                $this->prop = $classMarkAttribute->title;
 
-            $this->mode = $mark->mode;
-            $this->args = $mark->args;
+            $this->mode = $classMarkAttribute->mode;
+            $this->args = $classMarkAttribute->args;
             return;
         }
 
 
         $attr = $reflection->getAttributes(MarkInstance::class);
         if (!empty($attr)) {
-            $mark = $attr[0]->newInstance();
-            if ($mark->title)
-                $this->title = $mark->title;
+            $classMarkAttribute = $attr[0]->newInstance();
+            if ($classMarkAttribute->title)
+                $this->prop = $classMarkAttribute->title;
 
             $this->mode = Mark::INSTANCE;
 
@@ -87,5 +95,18 @@ class ReflectionMark
             }
             return;
         }
+    }
+
+
+
+    private function getMarkerFromNamespace(){
+        $folders = explode('\\', $this->namespace);
+
+        return isset($folders[1]) ? $folders[1] : false;
+    }
+
+
+    private function checkMarkerIsInit(){
+        return false;
     }
 }

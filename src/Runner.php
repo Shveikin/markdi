@@ -77,7 +77,7 @@ class Runner
             $info = pathinfo("$path/$file");
             ['filename' => $class, 'extension' => $extension] = $info;
             if ($extension == 'php') {
-                $reflection = new ReflectionMark($namespace, $class);
+                $reflection = new ReflectionMark("$namespace\\$class");
                 if (!$reflection->exception) {
                     if (!$list)
                         $list = [];
@@ -85,12 +85,6 @@ class Runner
                     $list[] = $reflection;
                 }
             }
-            // if ($classInfo = $this->getClassInfo($namespace, $class)) {
-            //     if (!$list)
-            //         $list = [];
-
-            //     $list[] = $classInfo;
-            // }
         }
     }
 
@@ -145,15 +139,18 @@ class Runner
             $methods = "";
 
             foreach ($classes as $class) {
-                $props = $this->getProps($class->args, $class->title, $class->mode);
-                $namespaces .= "use $class->full;\n";
+                $props = $this->getProps($class->args, $class->prop, $class->mode);
+                $namespaces .= "use $class->className;\n";
 
                 if ($class->mode != Mark::INSTANCE)
-                    $varibles   .= " * @property-read $class->class \${$class->title}\n";
+                    $varibles   .= " * @property-read $class->shortName \${$class->prop}\n";
 
-                $mehodProps = $class->mode == Mark::INSTANCE ? $this->wrap(array_keys($class->args)) : '()';
+                $mehodProps = $class->mode == Mark::INSTANCE 
+                    ? $this->wrap(array_keys($class->args), true) 
+                    : '()';
+
                 $modeSymbol = $class->mode == Mark::LOCAL    ? '_'    : '';
-                $methods   .= "   function $modeSymbol{$class->title}$mehodProps: {$class->class} { return new {$class->class}$props; }\n";
+                $methods   .= "   function $modeSymbol{$class->prop}$mehodProps: {$class->shortName} { return new {$class->shortName}$props; }\n";
             }
 
             $code = <<<CODE
@@ -201,9 +198,9 @@ class Runner
     }
 
 
-    private function wrap(array $props)
+    private function wrap(array $props, $forceWrap = false)
     {
         $resultStr = implode(', ', $props);
-        return $resultStr ? "($resultStr)" : '';
+        return $resultStr || $forceWrap ? "($resultStr)" : '';
     }
 }
