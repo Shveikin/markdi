@@ -2,14 +2,18 @@
 <?php
 use markdi\Runner;
 
+$root = isset($GLOBALS['_composer_autoload_path']) ? $GLOBALS['_composer_autoload_path'] : __DIR__;
 
-require $GLOBALS['_composer_autoload_path'];
-$composerJsonPath = findComposerJson($GLOBALS['_composer_autoload_path']);
+$root = findComposerJson($root);
+if (!$root)
+    exit('composer.json not found');
 
-if ($composerJsonPath) {
+require "$root/vendor/autoload.php";
 
-    $composer = json_decode(file_get_contents("$composerJsonPath/composer.json"), true);
-    new Runner($composerJsonPath, $composer['autoload']['psr-4'], 'markers');
+if ($root) {
+
+    $composer = json_decode(file_get_contents("$root/composer.json"), true);
+    new Runner($root, $composer['autoload']['psr-4'], 'markers');
 
 } else {
     echo "Composer.json not found.\n";
@@ -19,9 +23,12 @@ if ($composerJsonPath) {
 // Функция для поиска файла composer.json вверх по директориям
 function findComposerJson($dir)
 {
+    if (is_null($dir))
+        $dir = __DIR__;
+
     while ($dir !== '/' && $dir !== \DIRECTORY_SEPARATOR) {
-        $composerJsonPath = $dir . \DIRECTORY_SEPARATOR . 'composer.json';
-        if (file_exists($composerJsonPath)) {
+        $root = $dir . \DIRECTORY_SEPARATOR . 'composer.json';
+        if (file_exists($root)) {
             return $dir;
         }
 

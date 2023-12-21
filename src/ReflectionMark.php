@@ -7,14 +7,14 @@ class ReflectionMark
 
     public string $full;
     public string $title;
-    public string $mode = Mark::GLOBAL;
+    public int $mode = Mark::GLOBAL;
     public array $args = [];
     public $exception = false;
 
 
 
 
-    function __construct($namespace, $class)
+    function __construct(public $namespace, public $class)
     {
         $this->full = "$namespace\\$class";
         $title = lcfirst($class);

@@ -7,22 +7,24 @@ use markexample\User;
 
 
 #[Mark('friends', ['parent'])]
-class Friends {
+class Friends
+{
 
-    
 
-    function __construct
-    (
+
+    function __construct(
         private User $user,
-    )
-    {}
+    ) {
+    }
 
 
-    function seyHello(){
+    function seyHello()
+    {
         return "hello {$this->getFriendName()}";
     }
 
-    function getFriendName(){
+    function getFriendName()
+    {
         return $this->user->name;
     }
 }
