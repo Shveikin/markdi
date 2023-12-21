@@ -76,103 +76,57 @@ class Runner
 
             $info = pathinfo("$path/$file");
             ['filename' => $class, 'extension' => $extension] = $info;
-            if ($extension == 'php')
-                if ($classInfo = $this->getClassInfo($namespace, $class)) {
+            if ($extension == 'php') {
+                $reflection = new ReflectionMark($namespace, $class);
+                if (!$reflection->exception) {
                     if (!$list)
                         $list = [];
 
-                    $list[] = $classInfo;
+                    $list[] = $reflection;
                 }
-        }
-    }
-
-
-
-    private function bindProps($full, &$title, &$mode, &$args)
-    {
-        $reflection = new \ReflectionClass($full);
-        if ($reflection->isAbstract())
-            throw new \Exception("abstract class", 0);
-
-
-
-        $notMark = $reflection->getAttributes(NotMark::class);
-        if (!empty($notMark))
-            return;
-
-
-        $attr = $reflection->getAttributes(Mark::class);
-        if (!empty($attr)) {
-            $mark = $attr[0]->newInstance();
-            if ($mark->title)
-                $title = $mark->title;
-
-            $mode = $mark->mode;
-            $args = $mark->args;
-            return;
-        }
-
-
-        $attr = $reflection->getAttributes(MarkInstance::class);
-        if (!empty($attr)) {
-            $mark = $attr[0]->newInstance();
-            if ($mark->title)
-                $title = $mark->title;
-
-            $mode = Mark::INSTANCE;
-
-
-            $constructor = $reflection->getConstructor();
-            if (!$constructor)
-                return;
-
-            $props = $constructor->getParameters();
-            foreach ($props as $prop) {
-                $defaultValue = null;
-                if ($prop->isDefaultValueAvailable()) {
-                    $defaultValue = $prop->getDefaultValue();
-                }
-
-                $full = $prop->getType() . ' $' . $prop->getName();
-
-                if (!is_null($defaultValue)) {
-                    $full .= " = " . var_export($defaultValue, true);
-                }
-                $args[$full] = '$' . $prop->getName();
             }
-            return;
+            // if ($classInfo = $this->getClassInfo($namespace, $class)) {
+            //     if (!$list)
+            //         $list = [];
+
+            //     $list[] = $classInfo;
+            // }
         }
     }
 
 
-    private function getClassInfo($namespace, $class)
-    {
-        $full = "$namespace\\$class";
-        $title = lcfirst($class);
-        $mode = Mark::GLOBAL;
-        $args = [];
-
-        try {
-            $this->bindProps($full, $title, $mode, $args);
-        } catch (\Throwable $th) {
-            echo "ignore - $class\n";
-            echo "\t> " . $th->getMessage() . "\n";
-            return;
-        }
 
 
-        return new class($full, $title, $class, $mode, $args)
-        {
-            function __construct(
-                public string $full,
-                public string $title,
-                public string $class,
-                public string $mode,
-                public array $args,
-            ) {
-            }
-        };
-    }
+
+
+    // private function getClassInfo($namespace, $class)
+    // {
+    //     $full = "$namespace\\$class";
+    //     $title = lcfirst($class);
+    //     $mode = Mark::GLOBAL;
+    //     $args = [];
+
+    //     try {
+    //         $this->bindProps($full, $title, $mode, $args);
+    //     } catch (\Throwable $th) {
+    //         echo "ignore - $class\n";
+    //         echo "\t> " . $th->getMessage() . "\n";
+    //         return;
+    //     }
+
+
+    //     return new class($full, $title, $class, $mode, $args)
+    //     {
+    //         function __construct(
+    //             public string $full,
+    //             public string $title,
+    //             public string $class,
+    //             public string $mode,
+    //             public array  $args,
+    //         ) {
+    //         }
+    //     };
+    // }
 
     private function removeFolder(string $path)
     {
