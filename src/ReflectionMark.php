@@ -40,7 +40,7 @@ class ReflectionMark
         $this->shortName = $reflection->getShortName();
 
         [$this->marker, $this->markerClass] = $this->getMarkerFromNamespace();
-        $this->$this->prop = lcfirst($this->shortName);
+        $this->prop = lcfirst($this->shortName);
 
 
         if ($reflection->isAbstract()) {
