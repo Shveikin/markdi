@@ -10,6 +10,7 @@ class ReflectionMark
     public string $shortName;
 
     public string $marker;
+    public string $markerClass;
     public bool $isMarkerInit = false;
 
     public int $mode = Mark::GLOBAL;
@@ -34,13 +35,13 @@ class ReflectionMark
     private function handle()
     {
         $reflection = new \ReflectionClass($this->className);
-        
+
         $this->namespace = $reflection->getNamespaceName();
         $this->shortName = $reflection->getShortName();
-        $this->marker = $this->getMarkerFromNamespace();
-        $this->isMarkerInit = $this->checkMarkerIsInit();
-        $this->prop = lcfirst($this->shortName);
-        
+
+        [$this->marker, $this->markerClass] = $this->getMarkerFromNamespace();
+        $this->$this->prop = lcfirst($this->shortName);
+
 
         if ($reflection->isAbstract()) {
             $this->exception = "abstract class";
@@ -99,14 +100,17 @@ class ReflectionMark
 
 
 
-    private function getMarkerFromNamespace(){
-        $folders = explode('\\', $this->namespace);
+    private function getMarkerFromNamespace()
+    {
+        [$main, $marker] = explode('\\', "$this->namespace\\\\");
 
-        return isset($folders[1]) ? $folders[1] : false;
+        $markerClass = "{$main}\\_markers\\$marker";
+        return [$marker, $markerClass];
     }
 
 
-    private function checkMarkerIsInit(){
+    private function checkMarkerIsInit()
+    {
         return false;
     }
 }
