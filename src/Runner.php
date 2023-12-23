@@ -60,7 +60,7 @@ class Runner
             if ($extra == '@')
                 $marker = 'main';
 
-            if (isset($added[$marker]))
+            if (isset($added[$marker]) || str_starts_with($marker, '_'))
                 continue;
 
             $code = <<<PHP

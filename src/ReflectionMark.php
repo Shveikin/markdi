@@ -50,10 +50,12 @@ class ReflectionMark
 
         $this->prop = lcfirst($this->shortName);
 
-
         if ($reflection->isAbstract())
             return $this->except("is abstract");
 
+
+        if (str_starts_with($this->marker, '_'))
+            return $this->except("pass");
 
 
 
