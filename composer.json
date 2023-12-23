@@ -23,12 +23,16 @@
         "post-update-cmd": [
             "chmod +x bin\/mark",
             "markdi\\Commands::createMarkScript"
-        ]
+        ],
+        "mark": "php vendor\/bin\/mark"
     },
     "bin": [
         "bin\/mark"
     ],
     "require-dev": {
         "phpunit\/phpunit": "^10.4"
+    },
+    "require": {
+        "composer/class-map-generator": "^1.1"
     }
 }

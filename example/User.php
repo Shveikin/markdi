@@ -1,24 +1,17 @@
 <?php
 
 namespace markexample;
-use markexample\_markers\tools;
+use markexample\_markers\cars;
 
 
 class User {
-    use tools;
+    use cars;
+    
+    private $myCar;
 
-    function __construct(
-        public readonly string $name
-    )
-    {}
-
-    function helloFromFriends(){
-        return $this->friends->seyHello();
-    }
-
-
-    function ___get($var){
-        return "$var - is var";
+    function __construct()
+    {
+        $this->myCar = $this->mercedes->setColor('black');
     }
 
 }

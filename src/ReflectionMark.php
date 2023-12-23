@@ -11,6 +11,7 @@ class ReflectionMark
 
     public string $marker;
     public string $markerClass;
+    public string $markerNamespace;
     public bool $isMarkerInit = false;
 
     public int $mode = Mark::GLOBAL;
@@ -30,23 +31,29 @@ class ReflectionMark
     }
 
 
-
+    private function except(string $message){
+        $this->exception = $message;
+    }
 
     private function handle()
     {
         $reflection = new \ReflectionClass($this->className);
 
+        if ($reflection->isTrait())
+            return $this->except("is trait");
+
         $this->namespace = $reflection->getNamespaceName();
         $this->shortName = $reflection->getShortName();
 
-        [$this->marker, $this->markerClass] = $this->getMarkerFromNamespace();
+        
+        $this->setMarkerInfo();
+
         $this->prop = lcfirst($this->shortName);
 
 
-        if ($reflection->isAbstract()) {
-            $this->exception = "abstract class";
-            return;
-        }
+        if ($reflection->isAbstract())
+            return $this->except("is abstract");
+
 
 
 
@@ -100,12 +107,12 @@ class ReflectionMark
 
 
 
-    private function getMarkerFromNamespace()
+    private function setMarkerInfo()
     {
-        [$main, $marker] = explode('\\', "$this->namespace\\\\");
+        [$main, $this->marker] = explode('\\', "$this->namespace\\main");
 
-        $markerClass = "{$main}\\_markers\\$marker";
-        return [$marker, $markerClass];
+        $this->markerClass = "{$main}\\_markers\\{$this->marker}";
+        $this->markerNamespace = "{$main}\\_markers";
     }
 
 
