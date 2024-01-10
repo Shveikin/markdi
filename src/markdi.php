@@ -32,7 +32,9 @@ trait markdi
     private function ___bind($alias, $element){
         if (!isset($this->___binding___))
             $this->___binding___ = [];
-        $this->___binding___[] = $alias;        
+        $this->___binding___[] = $alias;
+
+        Map::link(Map::classId($this), $alias, Map::classId($element));
 
         return $element;
     }

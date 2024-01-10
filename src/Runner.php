@@ -76,51 +76,103 @@ class Runner
 
             $info = pathinfo("$path/$file");
             ['filename' => $class, 'extension' => $extension] = $info;
-            if ($extension == 'php') {
-                $reflection = new ReflectionMark("$namespace\\$class");
-                if (!$reflection->exception) {
+            if ($extension == 'php')
+                if ($classInfo = $this->getClassInfo($namespace, $class)) {
                     if (!$list)
                         $list = [];
 
-                    $list[] = $reflection;
+                    $list[] = $classInfo;
                 }
-            }
         }
     }
 
 
 
+    private function bindProps($full, &$title, &$mode, &$args)
+    {
+        $reflection = new \ReflectionClass($full);
+        if ($reflection->isAbstract())
+            throw new \Exception("abstract class", 0);
 
 
 
-    // private function getClassInfo($namespace, $class)
-    // {
-    //     $full = "$namespace\\$class";
-    //     $title = lcfirst($class);
-    //     $mode = Mark::GLOBAL;
-    //     $args = [];
-
-    //     try {
-    //         $this->bindProps($full, $title, $mode, $args);
-    //     } catch (\Throwable $th) {
-    //         echo "ignore - $class\n";
-    //         echo "\t> " . $th->getMessage() . "\n";
-    //         return;
-    //     }
+        $notMark = $reflection->getAttributes(NotMark::class);
+        if (!empty($notMark))
+            return;
 
 
-    //     return new class($full, $title, $class, $mode, $args)
-    //     {
-    //         function __construct(
-    //             public string $full,
-    //             public string $title,
-    //             public string $class,
-    //             public string $mode,
-    //             public array  $args,
-    //         ) {
-    //         }
-    //     };
-    // }
+        $attr = $reflection->getAttributes(Mark::class);
+        if (!empty($attr)) {
+            $mark = $attr[0]->newInstance();
+            if ($mark->title)
+                $title = $mark->title;
+
+            $mode = $mark->mode;
+            $args = $mark->args;
+            return;
+        }
+
+
+        $attr = $reflection->getAttributes(MarkInstance::class);
+        if (!empty($attr)) {
+            $mark = $attr[0]->newInstance();
+            if ($mark->title)
+                $title = $mark->title;
+
+            $mode = Mark::INSTANCE;
+
+
+            $constructor = $reflection->getConstructor();
+            if (!$constructor)
+                return;
+
+            $props = $constructor->getParameters();
+            foreach ($props as $prop) {
+                $defaultValue = null;
+                if ($prop->isDefaultValueAvailable()) {
+                    $defaultValue = $prop->getDefaultValue();
+                }
+
+                $full = $prop->getType() . ' $' . $prop->getName();
+
+                if (!is_null($defaultValue)) {
+                    $full .= " = " . var_export($defaultValue, true);
+                }
+                $args[$full] = '$' . $prop->getName();
+            }
+            return;
+        }
+    }
+
+
+    private function getClassInfo($namespace, $class)
+    {
+        $full = "$namespace\\$class";
+        $title = lcfirst($class);
+        $mode = Mark::GLOBAL;
+        $args = [];
+
+        try {
+            $this->bindProps($full, $title, $mode, $args);
+        } catch (\Throwable $th) {
+            echo "ignore - $class\n";
+            echo "\t> " . $th->getMessage() . "\n";
+            return;
+        }
+
+
+        return new class($full, $title, $class, $mode, $args)
+        {
+            function __construct(
+                public string $full,
+                public string $title,
+                public string $class,
+                public string $mode,
+                public array $args,
+            ) {
+            }
+        };
+    }
 
     private function removeFolder(string $path)
     {
@@ -139,18 +191,15 @@ class Runner
             $methods = "";
 
             foreach ($classes as $class) {
-                $props = $this->getProps($class->args, $class->prop, $class->mode);
-                $namespaces .= "use $class->className;\n";
+                $props = $this->getProps($class->args, $class->title, $class->mode);
+                $namespaces .= "use $class->full;\n";
 
                 if ($class->mode != Mark::INSTANCE)
-                    $varibles   .= " * @property-read $class->shortName \${$class->prop}\n";
+                    $varibles   .= " * @property-read $class->class \${$class->title}\n";
 
-                $mehodProps = $class->mode == Mark::INSTANCE 
-                    ? $this->wrap(array_keys($class->args), true) 
-                    : '()';
-
+                $mehodProps = $class->mode == Mark::INSTANCE ? $this->wrap(array_keys($class->args)) : '()';
                 $modeSymbol = $class->mode == Mark::LOCAL    ? '_'    : '';
-                $methods   .= "   function $modeSymbol{$class->prop}$mehodProps: {$class->shortName} { return new {$class->shortName}$props; }\n";
+                $methods   .= "   function $modeSymbol{$class->title}$mehodProps: {$class->class} { return new {$class->class}$props; }\n";
             }
 
             $code = <<<CODE
@@ -198,9 +247,9 @@ class Runner
     }
 
 
-    private function wrap(array $props, $forceWrap = false)
+    private function wrap(array $props)
     {
         $resultStr = implode(', ', $props);
-        return $resultStr || $forceWrap ? "($resultStr)" : '';
+        return $resultStr ? "($resultStr)" : '';
     }
 }
