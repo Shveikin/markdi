@@ -37,7 +37,12 @@ class ReflectionMark
 
     private function handle()
     {
-        $reflection = new \ReflectionClass($this->className);
+
+        try {
+            $reflection = new \ReflectionClass($this->className);
+        } catch (\ReflectionException $th) {
+            return $this->except("class not exists or not class");
+        }
 
         if ($reflection->isTrait())
             return $this->except("is trait");
@@ -96,12 +101,17 @@ class ReflectionMark
                     $defaultValue = $prop->getDefaultValue();
                 }
 
-                $full = $prop->getType() . ' $' . $prop->getName();
+                $full = trim($prop->getType() . ' $' . $prop->getName());
 
                 if (!is_null($defaultValue)) {
                     $full .= " = " . var_export($defaultValue, true);
                 }
-                $this->args[$full] = '$' . $prop->getName();
+
+                $variadi = '';
+                if ($prop->isVariadic()){
+                    $variadi = '...';
+                }
+                $this->args["$variadi$full"] = "$variadi$" . $prop->getName();
             }
             return;
         }
